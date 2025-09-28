@@ -4,39 +4,42 @@
     "slug": "user",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./src/assets/icons/rickshaw.png",
     "scheme": "user",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "config": {
+        "googleMapsApiKey": "AIzaSyBVuu_nVQ1WuEGf3rUur15LKBzz5o_OgP0"
+      }
     },
     "android": {
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBVuu_nVQ1WuEGf3rUur15LKBzz5o_OgP0"
+        }
+      },
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./src/assets/images/carIcon.jpg",
+        "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./src/assets/icons/rickshaw.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./src/assets/images/carIcon.jpg",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
+          "backgroundColor": "#FFFFFF"
         }
       ]
     ],
