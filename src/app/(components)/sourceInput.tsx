@@ -3,7 +3,7 @@ import { View, StyleSheet } from "react-native";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import { Ionicons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
-import { setOrigin, selectOrigin } from "@/features/mapSlice.tsx/mapSlice";
+import { setOrigin, selectOrigin } from "@/features/mapSlice/mapSlice";
 import { RootState } from "@/features/store";
 import { GOOGLE_MAPS_API_KEY } from "@/constants/apiUrl";
 

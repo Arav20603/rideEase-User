@@ -5,7 +5,7 @@ import RideOptions from "../(components)/rideOptions";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useDispatch } from "react-redux";
-import { setDestination } from "@/features/mapSlice.tsx/mapSlice";
+import { setDestination } from "@/features/mapSlice/mapSlice";
 import Map from "./map";
 
 const Booking = () => {

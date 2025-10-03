@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import Map from '@/app/screens/map';
 import * as Location from 'expo-location';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectDestination, selectOrigin, setDestination, setOrigin } from '@/features/mapSlice.tsx/mapSlice';
+import { selectDestination, selectOrigin, setDestination, setOrigin } from '@/features/mapSlice/mapSlice';
 import { RootState } from '@/features/store';
 import DestInput from '@/app/screens/destInput';
 import AsyncStorage from '@react-native-async-storage/async-storage';

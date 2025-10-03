@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import React, { useState, useRef } from "react";
 import { useSelector } from "react-redux";
-import { selectTravelTimeInformation } from "@/features/mapSlice.tsx/mapSlice";
+import { selectTravelTimeInformation } from "@/features/mapSlice/mapSlice";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";

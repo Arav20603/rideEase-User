@@ -3,7 +3,7 @@ import { View, StyleSheet } from "react-native";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import { Ionicons } from "@expo/vector-icons";
 import { useDispatch } from "react-redux";
-import { setDestination } from "@/features/mapSlice.tsx/mapSlice";
+import { setDestination } from "@/features/mapSlice/mapSlice";
 import { useRouter } from "expo-router";
 import { GOOGLE_MAPS_API_KEY } from "@/constants/apiUrl";
 

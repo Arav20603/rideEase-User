@@ -3,7 +3,7 @@ import { StyleSheet } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import MapViewDirections from 'react-native-maps-directions'
 import { useDispatch, useSelector } from "react-redux";
-import { selectOrigin, selectDestination, setTimeInformation } from "@/features/mapSlice.tsx/mapSlice";
+import { selectOrigin, selectDestination, setTimeInformation } from "@/features/mapSlice/mapSlice";
 import { useRef, useEffect } from "react";
 import { GOOGLE_MAPS_API_KEY } from "@/constants/apiUrl";
 
