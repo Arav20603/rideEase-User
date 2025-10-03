@@ -10,7 +10,7 @@ web-build/
 expo-env.d.ts
 
 # api
-src/constants/apiUrls.tsx
+src/constants/apiUrl.ts
 
 # Native
 .kotlin/
