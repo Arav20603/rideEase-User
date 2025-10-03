@@ -19,6 +19,8 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { backendURL } from "@/constants/url";
 import { Ionicons } from "@expo/vector-icons";
+import { useDispatch } from "react-redux";
+import { setUser } from "@/features/userSlice/userSlice";
 
 const { width } = Dimensions.get("window");
 
@@ -27,6 +29,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [secureTextEntry, setSecureTextEntry] = useState(true);
+  const dispatch = useDispatch()
 
   const togglePasswordVisibility = () => setSecureTextEntry(!secureTextEntry);
 
@@ -36,6 +39,7 @@ const Login = () => {
       if (res.data.success) {
         Toast.show({ type: "success", text1: res.data.message });
         await AsyncStorage.setItem("user", email);
+        // dispatch(setUser())
         router.push("/home");
       } else Toast.error(res.data.message);
       setPassword("");

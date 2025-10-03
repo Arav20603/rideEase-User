@@ -17,12 +17,15 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Toast } from "toastify-react-native";
+import { useDispatch } from "react-redux";
+import { clearUser, setUser } from "@/features/userSlice/userSlice";
 
 const { width } = Dimensions.get("window");
 
 const Profile = () => {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const dispatch = useDispatch()
+  const [user, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,7 +36,8 @@ const Profile = () => {
 
         const res = await axios.post(`${backendURL}/get-user`, { email });
         if (res.data.success) {
-          setUser(res.data.user);
+          dispatch(setUser(res.data.user));
+          setUserData(res.data.user)
         }
       } catch (err) {
         console.log(err);
@@ -50,6 +54,7 @@ const Profile = () => {
       if (res.data.success) {
         Toast.show({ type: "success", text1: res.data.message });
         await AsyncStorage.clear()
+        dispatch(clearUser())
         router.replace("/login");
       } else Toast.error(res.data.message);
     } catch (err: any) {

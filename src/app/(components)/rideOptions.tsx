@@ -9,16 +9,22 @@ import {
 } from "react-native";
 import React, { useState, useRef } from "react";
 import { useSelector } from "react-redux";
-import { selectTravelTimeInformation } from "@/features/mapSlice/mapSlice";
+import { selectDestination, selectOrigin, selectTravelTimeInformation } from "@/features/mapSlice/mapSlice";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { socket } from "@/utils/socket";
+import { selectUser } from "@/features/userSlice/userSlice";
+
 
 const RideOptions = () => {
   const [selected, setSelected] = useState<any>(null);
   const travelTimeInformation = useSelector(selectTravelTimeInformation);
   const router = useRouter();
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const origin = useSelector(selectOrigin)
+  const destination = useSelector(selectDestination)
+  const user = useSelector(selectUser)
 
   const rides = [
     { id: "bike", title: "Bike", baseFare: 30, pricePerKm: 10, image: require("../../assets/icons/bike.png"), badge: "Fastest" },
@@ -37,8 +43,27 @@ const RideOptions = () => {
   };
 
   const handleSelectRide = () => {
+    if (!selected || !origin || !destination) {
+      console.warn("Missing ride selection or locations");
+      return;
+    }
+
+    const distanceKm = travelTimeInformation.distance.value / 1000;
+    let computedFare = selected.baseFare + distanceKm * selected.pricePerKm;
+    computedFare = Math.ceil(computedFare / 5) * 5;
+
+    // Send data to backend
+    socket.emit("user_request", {
+      user,
+      ride: selected,
+      origin,
+      fare: computedFare,
+      destination,
+      timestamp: new Date(),
+    })
     router.push("/screens/findingRider");
   };
+
 
   return (
     <View style={styles.container}>

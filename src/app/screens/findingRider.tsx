@@ -16,33 +16,15 @@ const FindingRider = () => {
   const travelTime = useSelector(selectTravelTimeInformation);
 
   useEffect(() => {
-    socket.on("connect", () => {
-      console.log("✅ Connected:", socket.id);
-    });
-
-    socket.on("User ride request", (data) => {
-      console.log("📩 Ride request broadcasted:", data);
+    socket.on("ride_accept", (data) => {
+      console.log("📩 Rider details:", data);
+      router.push('/screens/bookingConfirmed')
     });
 
     return () => {
-      socket.off("User ride request");
-      socket.disconnect();
+      socket.off("ride_accept");
     };
   }, []);
-
-  const handleSendSocketMsg = () => {
-    const rideRequest = {
-      user,
-      origin,
-      destination,
-      vehicle: "Bike", // <-- add from selection
-      price: travelTime?.fare ?? null,
-      time: travelTime?.duration?.text ?? null,
-    };
-
-    socket.emit("User ride request", rideRequest);
-    console.log("🚀 Sent ride request:", rideRequest);
-  };
 
   const handleCancel = () => {
     Alert.alert("Cancel the ride", "Are you sure you want to cancel?", [
@@ -67,8 +49,6 @@ const FindingRider = () => {
         <View style={{ marginTop: 30, width: "80%" }}>
           <HorizontalProgressBar progress={60} />
         </View>
-
-        <Button title="Send Ride Request" color="blue" onPress={handleSendSocketMsg} />
 
         <TouchableOpacity onPress={handleCancel} style={styles.btnContainer}>
           <Text style={styles.btnText}>Cancel</Text>
