@@ -47,7 +47,7 @@ const FindingRider = () => {
         <Text style={styles.text}>Please wait</Text>
 
         <View style={{ marginTop: 30, width: "80%" }}>
-          <HorizontalProgressBar progress={60} />
+          <HorizontalProgressBar progress={80} />
         </View>
 
         <TouchableOpacity onPress={handleCancel} style={styles.btnContainer}>

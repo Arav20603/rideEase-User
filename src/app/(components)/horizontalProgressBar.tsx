@@ -7,7 +7,7 @@ const HorizontalProgressBar = ({ progress }: {progress: any}) => {
   useEffect(() => {
     Animated.timing(animatedWidth, {
       toValue: progress, // progress should be a value between 0 and 100
-      duration: 9000,
+      duration: 15000,
       useNativeDriver: false, // width animation does not support native driver
     }).start();
   }, [progress]);

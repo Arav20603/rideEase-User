@@ -7,7 +7,7 @@ import {
   StyleSheet,
   Animated,
 } from "react-native";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { selectDestination, selectOrigin, selectTravelTimeInformation } from "@/features/mapSlice/mapSlice";
 import { useRouter } from "expo-router";
@@ -15,6 +15,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { socket } from "@/utils/socket";
 import { selectUser } from "@/features/userSlice/userSlice";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { backendURL } from "@/constants/url";
 
 
 const RideOptions = () => {
@@ -24,7 +27,25 @@ const RideOptions = () => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const origin = useSelector(selectOrigin)
   const destination = useSelector(selectDestination)
-  const user = useSelector(selectUser)
+  const [user, setUser] = useState(null)
+  
+
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const email = await AsyncStorage.getItem('user')
+        if (email) {
+          const res = await axios.post(`${backendURL}/get-user`, {email})
+          if (res.data.success) {
+            setUser(res.data.user)
+          }
+        }
+      } catch (error) {
+        console.log('Error in fetching user')
+      }
+    }
+    fetchUser()
+  }, [])
 
   const rides = [
     { id: "bike", title: "Bike", baseFare: 30, pricePerKm: 10, image: require("../../assets/icons/bike.png"), badge: "Fastest" },
@@ -54,7 +75,7 @@ const RideOptions = () => {
 
     // Send data to backend
     socket.emit("user_request", {
-      user,
+      user: user,
       ride: selected,
       origin,
       fare: computedFare,

@@ -1,7 +1,10 @@
 import { View, Text, StyleSheet } from "react-native";
 import React from "react";
+import { useSelector } from "react-redux";
+import { selectUser } from "@/features/userSlice/userSlice";
 
 const BookingConfirmed = () => {
+  const user = useSelector(selectUser)
   return (
     <View style={styles.container}>
       <Text style={styles.title}>🎉 Booking Confirmed!</Text>
