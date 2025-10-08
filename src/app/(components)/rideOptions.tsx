@@ -8,16 +8,17 @@ import {
   Animated,
 } from "react-native";
 import React, { useState, useRef, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { selectDestination, selectOrigin, selectTravelTimeInformation } from "@/features/mapSlice/mapSlice";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { socket } from "@/utils/socket";
-import { selectUser } from "@/features/userSlice/userSlice";
+import { selectUser, setUser } from "@/features/userSlice/userSlice";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { backendURL } from "@/constants/url";
+import { setRideDetails } from "@/features/rideSlice/rideSlice";
 
 
 const RideOptions = () => {
@@ -27,7 +28,8 @@ const RideOptions = () => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const origin = useSelector(selectOrigin)
   const destination = useSelector(selectDestination)
-  const [user, setUser] = useState(null)
+  const [user, setUserDetails] = useState(null)
+  const dispatch = useDispatch()
   
 
   useEffect(() => {
@@ -37,7 +39,8 @@ const RideOptions = () => {
         if (email) {
           const res = await axios.post(`${backendURL}/get-user`, {email})
           if (res.data.success) {
-            setUser(res.data.user)
+            setUserDetails(res.data.user)
+            dispatch(setUser(res.data.user))
           }
         }
       } catch (error) {
@@ -82,6 +85,8 @@ const RideOptions = () => {
       destination,
       timestamp: new Date(),
     })
+    let rideDetails = { ride: selected, origin, destination, fare: computedFare}
+    dispatch(setRideDetails(rideDetails))
     router.push("/screens/findingRider");
   };
 

@@ -4,20 +4,23 @@ import Map from "./map";
 import HorizontalProgressBar from "../(components)/horizontalProgressBar";
 import { useRouter } from "expo-router";
 import { socket } from "@/utils/socket";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { selectDestination, selectOrigin, selectTravelTimeInformation } from "@/features/mapSlice/mapSlice";
 import { selectUser } from "@/features/userSlice/userSlice";
+import { setRiderDetails } from "@/features/rideSlice/rideSlice";
 
 const FindingRider = () => {
   const router = useRouter();
-  const user = useSelector(selectUser);
-  const destination = useSelector(selectDestination);
-  const origin = useSelector(selectOrigin);
-  const travelTime = useSelector(selectTravelTimeInformation);
+  const dispatch = useDispatch()
 
   useEffect(() => {
     socket.on("ride_accept", (data) => {
       console.log("📩 Rider details:", data);
+      const {rider, riderLocation} = data.riderDetails
+      dispatch(setRiderDetails({
+        rider,
+        riderLocation
+      }))
       router.push('/screens/bookingConfirmed')
     });
 
