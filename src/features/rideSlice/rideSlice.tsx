@@ -12,10 +12,8 @@ type RiderState = {
   email: string | null,
   name: string | null,
   phone: string | null,
-  vehicle: {
-    type: string,
-    plateNumber: string
-  }
+  vehicleType: string | null,
+  plateNo: string | null
 }
 
 type RideState = {
@@ -33,7 +31,8 @@ export interface RideProps {
   destination: LocationState | null
   rider: RiderState | null,
   riderLocation: LocationState | null,
-  rideDetails: RideState | null
+  rideDetails: RideState | null,
+  otp: string | null
 }
 
 const initialState: RideProps = {
@@ -42,7 +41,8 @@ const initialState: RideProps = {
   destination: null,
   rider: null,
   riderLocation: null,
-  rideDetails: null
+  rideDetails: null,
+  otp: null
 }
 
 export const riderSlice = createSlice({
@@ -58,6 +58,7 @@ export const riderSlice = createSlice({
     setRiderDetails: (state, action) => {
       state.rider = action.payload.rider
       state.riderLocation = action.payload.riderLocation
+      state.otp = action.payload.otp
     }
   }
 })

@@ -3,8 +3,10 @@ import { Tabs } from "expo-router";
 import { View, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const RootLayout = () => {
+  const inset = useSafeAreaInsets()
   return (
     <Tabs
       screenOptions={{
@@ -14,7 +16,7 @@ const RootLayout = () => {
           position: "absolute",
           left: 20,
           right: 20,
-          bottom: 3,
+          bottom: inset.bottom,
           elevation: 0,
           borderRadius: 30,
           height: 70,

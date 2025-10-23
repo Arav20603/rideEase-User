@@ -55,6 +55,7 @@ const SourceInput = () => {
         }}
         styles={autoCompleteStyles}
         enablePoweredByContainer={false}
+        keyboardShouldPersistTaps="handled"
       />
     </View>
   );

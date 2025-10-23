@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Text, TouchableWithoutFeedback, View } from "react-native";
 import SourceInput from "../(components)/sourceInput";
 import DestinationInput from "../(components)/destinationInput";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -9,8 +9,8 @@ const InputSrcDestPage = () => {
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Set Your Ride</Text>
       {/* <View style={styles.inputsWrapper}> */}
-        <SourceInput />
-        <DestinationInput />
+      <SourceInput />
+      <DestinationInput />
       {/* </View> */}
     </SafeAreaView>
   );

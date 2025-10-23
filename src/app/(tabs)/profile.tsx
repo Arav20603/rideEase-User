@@ -46,6 +46,7 @@ const Profile = () => {
       }
     };
     fetchDetails();
+    // router.push('/login')
   }, []);
 
   const handleLogout = async () => {
@@ -105,20 +106,25 @@ const Profile = () => {
           </View>
 
           {/* Info Card */}
+          {/* Info Card */}
           <View style={styles.infoCard}>
+            {/* Phone Row */}
             <View style={styles.row}>
-              <Ionicons name="call" size={20} color="#4a90e2" />
-              <Text style={styles.infoText}>{user.phone}</Text>
+              <Ionicons name="call-outline" size={22} color="#007AFF" />
+              <Text style={styles.infoText}>{user.phone || "No phone number"}</Text>
             </View>
-            {user.vehicle && (
+
+            {/* Verified Badge */}
+            {user.isVerified && (
               <View style={styles.row}>
-                <MaterialIcons name="two-wheeler" size={20} color="#4a90e2" />
-                <Text style={styles.infoText}>
-                  {user.vehicle.type} ({user.vehicle.plateNumber})
+                <MaterialIcons name="verified" size={22} color="#34C759" />
+                <Text style={[styles.infoText, { color: '#34C759', fontWeight: '600' }]}>
+                  Verified Account
                 </Text>
               </View>
             )}
           </View>
+
 
           {/* Options */}
           <View style={styles.options}>

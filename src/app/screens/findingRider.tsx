@@ -16,25 +16,36 @@ const FindingRider = () => {
   useEffect(() => {
     socket.on("ride_accept", (data) => {
       console.log("📩 Rider details:", data);
-      const {rider, riderLocation} = data.riderDetails
+      const {rider, riderLocation, rideOtp} = data.riderDetails
       dispatch(setRiderDetails({
-        rider,
-        riderLocation
+        rider: {
+          name: rider.name, email: rider.email, phone: rider.phone,
+          vehicleType: rider.type, plateNo: rider.plate
+        },
+        riderLocation: {
+          location: {
+            lat: riderLocation.lat,
+            lng: riderLocation.lng
+          },
+          description: riderLocation.desc
+        },
+        otp: rideOtp
       }))
+      console.log(rideOtp)
       router.push('/screens/bookingConfirmed')
     });
 
     return () => {
       socket.off("ride_accept");
     };
-  }, []);
+  }, [dispatch]);
 
   const handleCancel = () => {
     Alert.alert("Cancel the ride", "Are you sure you want to cancel?", [
       { text: "No", style: "cancel" },
       {
         text: "Yes",
-        onPress: () => router.back(),
+        onPress: () => router.push('/home'),
       },
     ]);
   };

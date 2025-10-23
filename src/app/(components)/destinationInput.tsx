@@ -23,7 +23,7 @@ const DestinationInput = () => {
           language: "en",
         }}
         textInputProps={{
-          autoFocus: false,
+          autoFocus: true,
           placeholderTextColor: "#9ca3af",
         }}
         debounce={400}
@@ -45,6 +45,7 @@ const DestinationInput = () => {
         }}
         styles={autoCompleteStyles}
         enablePoweredByContainer={false}
+        keyboardShouldPersistTaps="handled"
       />
     </View>
   );

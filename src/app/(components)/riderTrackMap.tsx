@@ -6,58 +6,67 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/features/store";
 import { GOOGLE_MAPS_API_KEY } from "@/constants/apiUrl";
 import { socket } from "@/utils/socket";
+import { router } from "expo-router";
 
 const RiderTrackMap = () => {
   const mapRef = useRef<MapView | null>(null);
   const ride = useSelector((state: RootState) => state.ride);
 
-  const [riderCoords, setRiderCoords] = useState<LatLng>({
-    latitude: ride.riderLocation?.location?.lat || 0,
-    longitude: ride.riderLocation?.location?.lng || 0,
-  });
+  const [riderCoords, setRiderCoords] = useState<LatLng | null>(
+    ride.riderLocation?.location
+      ? { latitude: ride.riderLocation.location.lat, longitude: ride.riderLocation.location.lng }
+      : null
+  );
 
-  const userCoords: LatLng = {
-    latitude: ride.origin?.location?.lat || 0,
-    longitude: ride.origin?.location?.lng || 0,
-  };
+  const userCoords: LatLng | null = ride.origin?.location
+    ? { latitude: ride.origin.location.lat, longitude: ride.origin.location.lng }
+    : null;
 
-  const destCoords: LatLng = {
-    latitude: ride.destination?.location?.lat || 0,
-    longitude: ride.destination?.location?.lng || 0,
-  };
+  const destCoords: LatLng | null = ride.destination?.location
+    ? { latitude: ride.destination.location.lat, longitude: ride.destination.location.lng }
+    : null;
 
   const vehicleIcons: Record<string, any> = {
     bike: require("@/assets/icons/bike.png"),
     taxi: require("@/assets/icons/taxi.png"),
     rickshaw: require("@/assets/icons/rickshaw.png"),
   };
-
   const vehicleIcon = vehicleIcons[ride.rideDetails?.id || "bike"];
 
-  // 🛰️ Listen for live rider location updates via socket
   useEffect(() => {
-    socket.on("rider_location_update", (data) => {
-      // data = { lat, lng }
-      setRiderCoords({
-        latitude: data.lat,
-        longitude: data.lng,
-      });
-    });
+    const handleLocation = (data: any) => {
+      console.log('rider_location received', data)
+      const { lat, lng } = data?.location || data?.riderLocation || {};
+      if (lat != null && lng != null) {
+        setRiderCoords({ latitude: lat, longitude: lng });
+      }
+    }
 
-    return () => {
-      socket.off("rider_location_update");
-    };
-  }, []);
+    socket.on('rider_location', handleLocation);
+    return () => { socket.off('rider_location', handleLocation) }
+  }, [ride]);
 
-  // 📍 Fit map to both markers
+
+  // Fit map to markers when coordinates update
   useEffect(() => {
-    setTimeout(() => {
-      mapRef.current?.fitToSuppliedMarkers(["rider", "user"], {
-        edgePadding: { top: 80, right: 80, bottom: 80, left: 80 },
-        animated: true,
-      });
-    }, 800);
-  }, [riderCoords]);
+    if (riderCoords && userCoords) {
+      setTimeout(() => {
+        mapRef.current?.fitToSuppliedMarkers(
+          ["rider", "user", "destination"],
+          { edgePadding: { top: 80, right: 80, bottom: 80, left: 80 }, animated: true }
+        );
+      }, 500);
+    }
+  }, [riderCoords, userCoords, destCoords]);
+
+  useEffect(() => {
+    socket.on('rider_cancelled_ride', (msg) => {
+      if (msg) router.push('/screens/findingRider')
+    })
+  }, [])
+
+  // Render nothing if coords not ready
+  if (!riderCoords || !userCoords || !destCoords) return null;
 
   return (
     <MapView
@@ -65,10 +74,10 @@ const RiderTrackMap = () => {
       provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
       style={styles.map}
       initialRegion={{
-        latitude: riderCoords.latitude || 12.97,
-        longitude: riderCoords.longitude || 77.59,
+        latitude: riderCoords.latitude,
+        longitude: riderCoords.longitude,
         latitudeDelta: 0.01,
-        longitudeDelta: 0.0,
+        longitudeDelta: 0.01,
       }}
     >
       {/* Rider Marker */}
@@ -85,29 +94,23 @@ const RiderTrackMap = () => {
       <Marker
         identifier="user"
         coordinate={userCoords}
-        title="You"
+        title="Pickup"
         description={ride.origin?.description || "Pickup location"}
       >
-        {/* <Image
-          source={require("@/assets/icons/destination.png")}
-          style={styles.userIcon}
-        /> */}
+        {/* <Image source={require("@/assets/icons/destination.png")} style={styles.userIcon} /> */}
       </Marker>
 
       {/* Destination Marker */}
       <Marker
-        identifier="user"
+        identifier="destination"
         coordinate={destCoords}
-        title="You"
-        description={ride.origin?.description || "Pickup location"}
+        title="Destination"
+        description={ride.destination?.description || "Destination"}
       >
-        <Image
-          source={require("@/assets/icons/destination.png")}
-          style={styles.userIcon}
-        />
+        <Image source={require("@/assets/icons/destination.png")} style={styles.userIcon} />
       </Marker>
 
-      {/* Path between rider and user */}
+      {/* Path from rider to user */}
       <MapViewDirections
         origin={riderCoords}
         destination={userCoords}
@@ -122,16 +125,7 @@ const RiderTrackMap = () => {
 export default RiderTrackMap;
 
 const styles = StyleSheet.create({
-  map: {
-    width: "100%",
-    height: "100%",
-  },
-  riderIcon: {
-    width: 35,
-    height: 35,
-  },
-  userIcon: {
-    width: 35,
-    height: 35,
-  },
+  map: { width: "100%", height: "100%" },
+  riderIcon: { width: 35, height: 35 },
+  userIcon: { width: 35, height: 35 },
 });
