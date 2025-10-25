@@ -50,7 +50,6 @@ const Map = () => {
       }
     };
 
-
     getTravelTime()
 
   }, [origin, destination, GOOGLE_MAPS_API_KEY])

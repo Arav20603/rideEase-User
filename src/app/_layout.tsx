@@ -10,10 +10,10 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
-          <Stack.Screen name="(components)" />
+          <Stack.Screen name="(components)" options={{ headerShown: false }} />
           <Stack.Screen name="(login)" />
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="screens" />
+          <Stack.Screen name="screens" options={{ headerShown: false }} />
         </Stack>
       </SafeAreaProvider>
     </Provider>

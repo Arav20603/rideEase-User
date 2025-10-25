@@ -1,17 +1,32 @@
 import React from "react";
-import { Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Text, TouchableWithoutFeedback, View } from "react-native";
+import { KeyboardAvoidingView, Platform, StyleSheet, Text, View, TouchableWithoutFeedback, Keyboard } from "react-native";
 import SourceInput from "../(components)/sourceInput";
 import DestinationInput from "../(components)/destinationInput";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const InputSrcDestPage = () => {
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Set Your Ride</Text>
-      {/* <View style={styles.inputsWrapper}> */}
-      <SourceInput />
-      <DestinationInput />
-      {/* </View> */}
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.container}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.innerContainer}>
+            <Text style={styles.title}>Set Your Ride</Text>
+
+            <View style={styles.inputWrapper}>
+              <View style={styles.inputCard}>
+                <SourceInput />
+              </View>
+
+              <View style={styles.inputCard}>
+                <DestinationInput />
+              </View>
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -19,18 +34,40 @@ const InputSrcDestPage = () => {
 export default InputSrcDestPage;
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#E0F7FA",
+  },
   container: {
     flex: 1,
-    backgroundColor: "#FDF5E6",
-    padding: 16,
+  },
+  innerContainer: {
+    flex: 1,
+    padding: 24,
+    justifyContent: "flex-start",
   },
   title: {
-    fontSize: 22,
+    fontSize: 28,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 30,
+    color: "#0077B6", // deep blue
+    textShadowColor: "rgba(0,0,0,0.1)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
-  inputsWrapper: {
-    gap: 12,
+  inputWrapper: {
+    gap: 18,
+  },
+  inputCard: {
+    backgroundColor: "#F0FFFF",
+    borderRadius: 25,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+    borderWidth: 0.5,
+    borderColor: "#e0e0e0",
   },
 });

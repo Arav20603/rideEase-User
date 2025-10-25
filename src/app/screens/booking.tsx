@@ -7,6 +7,7 @@ import { useRouter } from "expo-router";
 import { useDispatch } from "react-redux";
 import { setDestination } from "@/features/mapSlice/mapSlice";
 import Map from "./map";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const Booking = () => {
   const router = useRouter()
@@ -17,7 +18,7 @@ const Booking = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Map Section */}
       <Ionicons onPress={handleBackPress} name="arrow-back" size={30} color={'white'} style={styles.icon} />
       <View style={styles.mapContainer}>
@@ -28,7 +29,7 @@ const Booking = () => {
       <View style={styles.optionsContainer}>
         <RideOptions />
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
