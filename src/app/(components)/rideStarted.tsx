@@ -29,7 +29,7 @@ const RideStarted = () => {
   const vehicleIcons: Record<string, any> = {
     bike: require('../../assets/icons/bike.png'),
     auto: require('../../assets/icons/rickshaw.png'),
-    car: require('../../assets/icons/taxi.png'),
+    car: require('../../assets/icons/car.png'),
     suv: require('../../assets/icons/suv.png'),
     luxury: require('../../assets/icons/luxury.png'),
   };

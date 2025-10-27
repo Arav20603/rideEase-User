@@ -28,7 +28,7 @@ const RiderTrackMap = () => {
 
   const vehicleIcons: Record<string, any> = {
     bike: require("@/assets/icons/bike.png"),
-    taxi: require("@/assets/icons/taxi.png"),
+    car: require("@/assets/icons/car.png"),
     rickshaw: require("@/assets/icons/rickshaw.png"),
   };
   const vehicleIcon = vehicleIcons[ride.rideDetails?.id || "bike"];

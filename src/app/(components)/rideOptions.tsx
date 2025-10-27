@@ -40,7 +40,6 @@ const RideOptions = () => {
           const res = await axios.post(`${backendURL}/get-user`, {email})
           if (res.data.success) {
             setUserDetails(res.data.user)
-            dispatch(setUser(res.data.user))
           }
         }
       } catch (error) {
@@ -53,7 +52,7 @@ const RideOptions = () => {
   const rides = [
     { id: "bike", title: "Bike", baseFare: 30, pricePerKm: 10, image: require("../../assets/icons/bike.png"), badge: "Fastest" },
     { id: "auto", title: "Auto Rickshaw", baseFare: 50, pricePerKm: 15, image: require("../../assets/icons/rickshaw.png"), badge: "Affordable" },
-    { id: "taxi", title: "Taxi", baseFare: 80, pricePerKm: 20, image: require("../../assets/icons/taxi.png"), badge: "Standard" },
+    { id: "car", title: "Taxi", baseFare: 80, pricePerKm: 20, image: require("../../assets/icons/car.png"), badge: "Standard" },
     { id: "suv", title: "SUV", baseFare: 120, pricePerKm: 25, image: require("../../assets/icons/suv.png"), badge: "Family" },
     { id: "luxury", title: "Luxury", baseFare: 200, pricePerKm: 40, image: require("../../assets/icons/luxury.png"), badge: "Premium" },
   ];

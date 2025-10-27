@@ -4,13 +4,16 @@ import React from "react";
 import RideOptions from "../(components)/rideOptions";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setDestination } from "@/features/mapSlice/mapSlice";
 import Map from "./map";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { RootState } from "@/features/store";
+import MultiMode from "../multimode/multiMode";
 
 const Booking = () => {
   const router = useRouter()
+  const rideMode = useSelector((state: RootState) => state.mode)
   const dispatch = useDispatch()
 
   const handleBackPress = () => {
@@ -27,7 +30,9 @@ const Booking = () => {
 
       {/* Ride Options */}
       <View style={styles.optionsContainer}>
-        <RideOptions />
+        { rideMode.mode == 'normal' ? <RideOptions />
+        : <MultiMode />}
+        
       </View>
     </SafeAreaView>
   );

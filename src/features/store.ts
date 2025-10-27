@@ -3,12 +3,14 @@ import { configureStore } from "@reduxjs/toolkit";
 import mapReducer from "./mapSlice/mapSlice";
 import userReducer from './userSlice/userSlice'
 import rideReducer from './rideSlice/rideSlice'
+import modeReducer from './multimodeSlice/multimodeSlice'
 
 export const store = configureStore({
   reducer: {
     map: mapReducer,
     user: userReducer,
-    ride: rideReducer
+    ride: rideReducer,
+    mode: modeReducer
   },
 });
 
