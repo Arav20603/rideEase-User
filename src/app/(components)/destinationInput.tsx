@@ -1,15 +1,68 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Alert } from "react-native";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useDispatch } from "react-redux";
-import { setDestination } from "@/features/mapSlice/mapSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { selectOrigin, setDestination } from "@/features/mapSlice/mapSlice";
 import { useRouter } from "expo-router";
 import { GOOGLE_MAPS_API_KEY } from "@/constants/apiUrl";
+import { splitRoute } from "@/utils/splitRoute";
+import { setSegments } from "@/features/multimodeSlice/multimodeSlice";
+import { RootState } from "@/features/store";
+import haversine from "haversine";
+import polyline from '@mapbox/polyline'
 
 const DestinationInput = () => {
   const dispatch = useDispatch();
   const router = useRouter();
+  const origin = useSelector(selectOrigin);
+  const { mode } = useSelector((state: RootState) => state.mode);
+
+  const handleDestinationSelect = async (data: any, details: any) => {
+    if (!details) return;
+
+    const destination = {
+      location: {
+        lat: details.geometry.location.lat,
+        lng: details.geometry.location.lng,
+      },
+      description: data.description,
+    };
+
+    dispatch(setDestination(destination));
+
+    if (mode === "multi" && origin && destination) {
+      try {
+        const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.location.lat},${origin.location.lng}&destination=${destination.location.lat},${destination.location.lng}&key=${GOOGLE_MAPS_API_KEY}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        const route = data.routes?.[0];
+        if (!route) {
+          console.warn("❌ No route found");
+          return;
+        }
+
+        const totalDist = route.legs?.[0]?.distance?.value || 0;
+        const numSegments = totalDist >= 20000 ? 3 : 2;
+        const stops = splitRoute(route, numSegments);
+
+        const modes = ["mid stop 1", "mid stop 2", "drop"];
+        const segments = stops.slice(0, -1).map((p, i) => ({
+          start: p,
+          end: stops[i + 1],
+          mode: modes[i] || "walk",
+        }));
+
+        console.log("✅ Final Segments:", segments);
+        dispatch(setSegments(segments));
+      } catch (err) {
+        console.error("❌ Failed to split route:", err);
+      }
+    }
+
+    router.push("../screens/booking");
+  };
 
   return (
     <View style={styles.container}>
@@ -33,27 +86,7 @@ const DestinationInput = () => {
         timeout={1000}
         minLength={2}
         nearbyPlacesAPI="GooglePlacesSearch"
-        onPress={(data, details = null) => {
-          if (!details) return;
-
-          const address = data.description.toLowerCase();
-
-          if (!address.includes("bengaluru") && !address.includes("bangalore")) {
-            alert("Please select a location within Bangalore 🚫");
-            return;
-          }
-
-          dispatch(
-            setDestination({
-              location: {
-                lat: details.geometry.location.lat,
-                lng: details.geometry.location.lng,
-              },
-              description: data.description,
-            })
-          );
-          router.push("../screens/booking");
-        }}
+        onPress={handleDestinationSelect}
         styles={autoCompleteStyles}
         enablePoweredByContainer={false}
         keyboardShouldPersistTaps="handled"

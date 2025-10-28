@@ -10,6 +10,7 @@ import Map from "./map";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { RootState } from "@/features/store";
 import MultiMode from "../multimode/multiMode";
+import MultiMap from "../multimode/multiMap";
 
 const Booking = () => {
   const router = useRouter()
@@ -25,7 +26,8 @@ const Booking = () => {
       {/* Map Section */}
       <Ionicons onPress={handleBackPress} name="arrow-back" size={30} color={'white'} style={styles.icon} />
       <View style={styles.mapContainer}>
-        <Map />
+        { rideMode.mode == 'normal' ? <Map />
+        : <MultiMap />}
       </View>
 
       {/* Ride Options */}
@@ -48,7 +50,7 @@ const styles = StyleSheet.create({
   mapContainer: {
     borderBottomWidth: 1,
     borderBottomColor: "#e5e7eb",
-    height: '50%'
+    height: '40%'
   },
   optionsContainer: {
     flex: 1,

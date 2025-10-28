@@ -91,7 +91,7 @@ const Home = () => {
 
   useEffect(() => {
     dispatch(setDestination(null))
-  }, [])
+  }, [dispatch])
 
   if (loading) {
     return (

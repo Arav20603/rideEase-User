@@ -1,5 +1,5 @@
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -8,30 +8,41 @@ type ModeCardProps = {
   icon: string;
   selected: boolean;
   onPress: () => void;
-  colors?: any;
+  colors?: string[];
 };
 
 const ModeCard = ({ title, icon, selected, onPress, colors }: ModeCardProps) => {
-  const defaultColors: string[] = ["#e5e7eb", "#f3f4f6"];
+  const defaultColors = ["#f9fafb", "#f3f4f6"];
+  const selectedColors = colors ?? ["#3b82f6", "#06b6d4"];
+
   return (
     <TouchableOpacity
       activeOpacity={0.9}
       onPress={onPress}
-      style={[styles.wrapper, selected && styles.selected]}
+      style={[styles.container, selected && { transform: [{ scale: 1.04 }] }]}
     >
       <LinearGradient
-        colors={colors ?? defaultColors}
+        colors={selected ? selectedColors : defaultColors}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.card, selected && styles.cardSelected]}
       >
-        <Ionicons
-          name={icon as any}
-          size={28}
-          color={selected ? "#fff" : "#1e293b"}
-          style={{ marginBottom: 8 }}
-        />
-        <Text style={[styles.title, selected && { color: "#fff" }]}>{title}</Text>
+        <View
+          style={[
+            styles.iconWrapper,
+            selected ? styles.iconSelected : styles.iconDefault,
+          ]}
+        >
+          <Ionicons
+            name={icon as any}
+            size={22}
+            color={selected ? "#fff" : "#2563eb"}
+          />
+        </View>
+
+        <Text style={[styles.title, selected && styles.titleSelected]}>
+          {title}
+        </Text>
       </LinearGradient>
     </TouchableOpacity>
   );
@@ -40,31 +51,51 @@ const ModeCard = ({ title, icon, selected, onPress, colors }: ModeCardProps) => 
 export default ModeCard;
 
 const styles = StyleSheet.create({
-  wrapper: {
+  container: {
     flex: 1,
-    margin: 8,
-    borderRadius: 16,
+    marginHorizontal: 6,
+    marginVertical: 8,
+    borderRadius: 14,
   },
   card: {
-    borderRadius: 16,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 28,
-    elevation: 4,
+    paddingVertical: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
     backgroundColor: "#fff",
   },
   cardSelected: {
-    shadowColor: "#0ea5e9",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
+    elevation: 6,
+    shadowColor: "#3b82f6",
+    shadowOpacity: 0.25,
+  },
+  iconWrapper: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 6,
+  },
+  iconDefault: {
+    backgroundColor: "#eff6ff",
+  },
+  iconSelected: {
+    backgroundColor: "rgba(255,255,255,0.25)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.4)",
   },
   title: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "600",
     color: "#1e293b",
   },
-  selected: {
-    transform: [{ scale: 1.03 }],
+  titleSelected: {
+    color: "#fff",
   },
 });

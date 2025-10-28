@@ -1,24 +1,43 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-type RideMode = 'normal' | 'multi' | null
+type RideMode = "normal" | "multi" | null;
 
-interface RideModeState {
-  mode: RideMode
+interface Point {
+  lat: number;
+  lng: number;
 }
 
-const initialState: RideModeState = {
-  mode: null
+interface Segment {
+  start: Point;
+  end: Point;
+  mode?: string;
+}
+
+interface MultiModeState {
+  mode: RideMode;
+  segments: Segment[];
+}
+
+const initialState: MultiModeState = {
+  mode: null,
+  segments: [],
 };
 
-const userSlice = createSlice({
-  name: "rideMode",
+const multimodeSlice = createSlice({
+  name: "mode",
   initialState,
   reducers: {
     setRideMode: (state, action: PayloadAction<RideMode>) => {
-      state.mode = action.payload
-    }
+      state.mode = action.payload;
+    },
+    setSegments: (state, action: PayloadAction<Segment[]>) => {
+      state.segments = action.payload;
+    },
+    clearSegments: (state) => {
+      state.segments = [];
+    },
   },
 });
 
-export const { setRideMode } = userSlice.actions;
-export default userSlice.reducer;
+export const { setRideMode, setSegments, clearSegments } = multimodeSlice.actions;
+export default multimodeSlice.reducer;

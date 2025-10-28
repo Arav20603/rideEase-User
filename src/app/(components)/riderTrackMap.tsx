@@ -44,10 +44,11 @@ const RiderTrackMap = () => {
 
     socket.on('rider_location', handleLocation);
     return () => { socket.off('rider_location', handleLocation) }
-  }, [ride]);
+  }, [ride
+
+  ]);
 
 
-  // Fit map to markers when coordinates update
   useEffect(() => {
     if (riderCoords && userCoords) {
       setTimeout(() => {

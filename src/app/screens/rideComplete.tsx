@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Linking, Alert } from 'react-native';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/features/store';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -7,6 +7,30 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const RideComplete = () => {
   const ride = useSelector((state: RootState) => state.ride);
+
+  const handleUPIPayment = async () => {
+    const upiId = 'dakshandaravind-1@okhdfcbank';
+    const amount = ride?.fare || 1;
+    const name = 'Aravind Dakshan D';
+    const note = `Ride payment - ${ride.origin?.description || ''} to ${ride.destination?.description || ''}`;
+
+    const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(name)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
+
+    try {
+      const supported = await Linking.canOpenURL(upiUrl);
+      if (supported) {
+        await Linking.openURL(upiUrl);
+      } else {
+        Alert.alert(
+          'UPI App Not Found',
+          'No UPI app found on this device. Please install Google Pay, PhonePe, or Paytm to complete the payment.'
+        );
+      }
+    } catch (error) {
+      console.error('Error initiating UPI payment:', error);
+      Alert.alert('Error', 'Something went wrong while opening the UPI app.');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -30,7 +54,7 @@ const RideComplete = () => {
         </View>
       </View>
 
-      <TouchableOpacity style={styles.payBtn} onPress={() => console.log('Pay to Rider')}>
+      <TouchableOpacity style={styles.payBtn} onPress={handleUPIPayment}>
         <Text style={styles.payBtnText}>Pay to Rider</Text>
       </TouchableOpacity>
     </SafeAreaView>
