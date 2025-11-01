@@ -21,6 +21,10 @@ const Home = () => {
   const CACHE_EXPIRY = 10 * 60 * 1000; // 10 mins
 
   useEffect(() => {
+    dispatch(setDestination(null))
+  }, [dispatch])
+  
+  useEffect(() => {
     const loadCachedLocation = async () => {
       try {
         const cached = await AsyncStorage.getItem(LOCATION_KEY);
@@ -88,10 +92,6 @@ const Home = () => {
       }
     })();
   }, [dispatch]);
-
-  useEffect(() => {
-    dispatch(setDestination(null))
-  }, [dispatch])
 
   if (loading) {
     return (

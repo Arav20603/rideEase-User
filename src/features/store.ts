@@ -1,4 +1,3 @@
-// app/store.ts
 import { configureStore } from "@reduxjs/toolkit";
 import mapReducer from "./mapSlice/mapSlice";
 import userReducer from './userSlice/userSlice'
@@ -10,7 +9,7 @@ export const store = configureStore({
     map: mapReducer,
     user: userReducer,
     ride: rideReducer,
-    mode: modeReducer
+    mode: modeReducer,
   },
 });
 

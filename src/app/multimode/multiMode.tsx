@@ -1,95 +1,203 @@
-import { StyleSheet, Text, TouchableOpacity, View, FlatList } from "react-native";
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
-import { useRouter } from "expo-router";
-import { selectTravelTimeInformation } from "@/features/mapSlice/mapSlice";
-import { LinearGradient } from "expo-linear-gradient";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Platform,
+  FlatList,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import ModeCard from "../(components)/modeCard";
+import { useDispatch, useSelector } from "react-redux";
+import { addRide, removeRide } from "@/features/multimodeSlice/multimodeSlice";
+import { RootState } from "@/features/store";
+import { nanoid } from "@reduxjs/toolkit";
+import LocationInput from "./locationInput";
+import ModeRideCard from "./modeRideCard";
+import { Toast } from "toastify-react-native";
+import { router } from "expo-router";
 
-const modesData = [
-  { id: "bike", title: "Bike", icon: "bicycle", color: ["#0ea5e9", "#22d3ee"] },
-  { id: "auto", title: "Auto", icon: "car-outline", color: ["#facc15", "#f97316"] },
-  { id: "car", title: "Car", icon: "car-sport-outline", color: ["#3b82f6", "#6366f1"] },
-];
+const vehicles = ["bike", "car", "auto", "metro"] as const;
 
 const MultiMode = () => {
-  const router = useRouter();
-  const [selectedModes, setSelectedModes] = useState<string[]>([]);
-  const travelInfo = useSelector(selectTravelTimeInformation);
-  const distanceValue = travelInfo?.distance?.value / 1000 || 0;
-  const maxModes = distanceValue >= 20 ? 3 : 2;
+  const dispatch = useDispatch();
+  const rides = useSelector((state: RootState) => state.mode.rides);
 
-  const handleSelect = (mode: string) => {
-    if (selectedModes.includes(mode)) {
-      setSelectedModes(selectedModes.filter((m) => m !== mode));
-    } else if (selectedModes.length < maxModes) {
-      setSelectedModes([...selectedModes, mode]);
+  const [vehicle, setVehicle] = useState<typeof vehicles[number] | null>(null);
+  const [origin, setOrigin] = useState<any>(null);
+  const [destination, setDestination] = useState<any>(null);
+  const [metroDetails, setMetroDetails] = useState({ fromStation: "", toStation: "" });
+  const [clearTrigger, setClearTrigger] = useState(false);
+
+  const handleAddRide = () => {
+    if (!vehicle) return Toast.error("Select a vehicle type");
+
+    if (vehicle === "metro") {
+      if (!metroDetails.fromStation || !metroDetails.toStation)
+        return Alert.alert("Enter both metro stations");
+    } else {
+      if (!origin || !destination)
+        return Alert.alert("Select both origin and destination");
     }
+
+    const ride = {
+      id: nanoid(),
+      type: vehicle === "metro" ? "public" : "private",
+      vehicle,
+      origin: vehicle !== "metro" ? origin : null,
+      destination: vehicle !== "metro" ? destination : null,
+      metroDetails: vehicle === "metro" ? metroDetails : undefined,
+      completed: false,
+    };
+
+    dispatch(addRide(ride));
+    console.log("Added:", ride);
+
+    setOrigin(null);
+    setDestination(null);
+    setVehicle(null);
+    setMetroDetails({ fromStation: "", toStation: "" });
+    setClearTrigger(prev => !prev);
   };
 
-  const handleContinue = () => {
-    if (selectedModes.length > 0) {
-      router.push({
-        pathname: "/multimode/multiModeBook",
-        params: { modes: JSON.stringify(selectedModes) },
-      });
-    }
-  };
+
+  const renderRideItem = ({ item }: any) => (
+    <ModeRideCard ride={item} onRemove={(id) => dispatch(removeRide({ id }))} />
+  );
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* HEADER */}
-      <LinearGradient colors={["#0284c7", "#06b6d4"]} style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Choose Your Ride</Text>
-        <View style={{ width: 24 }} />
-      </LinearGradient>
+    <SafeAreaView style={styles.safe}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <FlatList
+            data={rides}
+            keyExtractor={(item) => item.id}
+            renderItem={renderRideItem}
+            ListHeaderComponent={
+              <View>
+                <Text style={styles.title}>Multi-Mode Ride Builder</Text>
 
-      {/* TITLE */}
-      <View style={styles.textSection}>
-        <Text style={styles.title}>Select Ride Combination</Text>
-        <Text style={styles.subText}>
-          {distanceValue >= 20
-            ? "Up to 3 rides allowed (long trip 🚗)"
-            : "Up to 2 rides allowed"}
-        </Text>
-      </View>
+                {/* Inputs */}
+                {vehicle === "metro" ? (
+                  <>
+                    <Text style={styles.label}>From Station</Text>
+                    <LocationInput
+                      key={`from-${clearTrigger}`}  // 👈 add this
+                      placeholder="Enter from station"
+                      onSelect={(data) =>
+                        setMetroDetails({ ...metroDetails, fromStation: data.description })
+                      }
+                      clearTrigger={clearTrigger}
+                    />
+                    <Text style={styles.label}>To Station</Text>
+                    <LocationInput
+                      key={`to-${clearTrigger}`}  // 👈 add this
+                      placeholder="Enter to station"
+                      onSelect={(data) =>
+                        setMetroDetails({ ...metroDetails, toStation: data.description })
+                      }
+                      clearTrigger={clearTrigger}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.label}>Origin</Text>
+                    <LocationInput
+                      key={`origin-${clearTrigger}`}  // 👈 add this
+                      placeholder="Enter pickup"
+                      onSelect={(data, details) =>
+                        setOrigin({
+                          location: details?.geometry?.location,
+                          description: data.description,
+                        })
+                      }
+                      clearTrigger={clearTrigger}
+                    />
+                    <Text style={styles.label}>Destination</Text>
+                    <LocationInput
+                      key={`dest-${clearTrigger}`}  // 👈 add this
+                      placeholder="Enter drop"
+                      onSelect={(data, details) =>
+                        setDestination({
+                          location: details?.geometry?.location,
+                          description: data.description,
+                        })
+                      }
+                      clearTrigger={clearTrigger}
+                    />
+                  </>
+                )}
 
-      {/* RIDE OPTIONS */}
-      <FlatList
-        data={modesData}
-        numColumns={2}
-        keyExtractor={(item) => item.id}
-        columnWrapperStyle={{ justifyContent: "space-between" }}
-        contentContainerStyle={{ paddingBottom: 30 }}
-        renderItem={({ item }) => (
-          <ModeCard
-            title={item.title}
-            icon={item.icon}
-            colors={item.color}
-            selected={selectedModes.includes(item.id)}
-            onPress={() => handleSelect(item.id)}
+
+                {/* Vehicle Selector */}
+                <Text style={[styles.label, { marginTop: 16 }]}>Select Vehicle</Text>
+                <View style={styles.vehicleContainer}>
+                  {vehicles.map((v) => (
+                    <TouchableOpacity
+                      key={v}
+                      style={[styles.vehicleBtn, vehicle === v && styles.vehicleSelected]}
+                      onPress={() => setVehicle(v)}
+                    >
+                      <Ionicons
+                        name={
+                          v === "bike"
+                            ? "bicycle"
+                            : v === "car"
+                              ? "car"
+                              : v === "auto"
+                                ? "car-sport"
+                                : "train"
+                        }
+                        size={20}
+                        color={vehicle === v ? "#2563eb" : "#6b7280"}
+                      />
+                      <Text
+                        style={[styles.vehicleText, vehicle === v && { color: "#2563eb" }]}
+                      >
+                        {v}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Add Segment */}
+                <TouchableOpacity style={styles.addBtn} onPress={handleAddRide}>
+                  <Text style={styles.addBtnText}>+ Add Segment</Text>
+                </TouchableOpacity>
+
+                <Text style={styles.subHeader}>Your Segments</Text>
+                {rides.length === 0 && (
+                  <Text style={styles.empty}>No segments added yet</Text>
+                )}
+              </View>
+            }
+            contentContainerStyle={styles.container}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           />
-        )}
-      />
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
 
-      {/* CONTINUE BUTTON */}
-      {selectedModes.length > 0 && (
-        <TouchableOpacity onPress={handleContinue} activeOpacity={0.9}>
-          <LinearGradient
-            colors={["#2563eb", "#60a5fa"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.continueBtn}
-          >
-            <Text style={styles.continueText}>Continue →</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      )}
+      {/* Fixed Bottom Button */}
+      <TouchableOpacity
+        activeOpacity={0.85}
+        style={[styles.bookBtn, rides.length === 0 && styles.bookBtnDisabled]}
+        disabled={rides.length === 0}
+        onPress={() => router.push('/screens/booking')}
+      >
+        <Ionicons name="checkmark-circle" size={22} color="#fff" />
+        <Text style={styles.bookBtnText}>
+          {rides.length === 0 ? "Add a Segment First" : "Book Ride"}
+        </Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 };
@@ -97,53 +205,63 @@ const MultiMode = () => {
 export default MultiMode;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f9fafb",
-    paddingHorizontal: 20,
-  },
-  header: {
+  safe: { flex: 1, backgroundColor: "#fff" },
+  container: { padding: 16, paddingBottom: 120 },
+  title: { fontSize: 22, fontWeight: "700", color: "#111827", marginBottom: 10 },
+  subHeader: { fontSize: 18, fontWeight: "600", marginTop: 24 },
+  label: { fontSize: 15, fontWeight: "500", marginTop: 12 },
+  vehicleContainer: { flexDirection: "row", flexWrap: "wrap", marginTop: 8 },
+  vehicleBtn: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderRadius: 16,
-    marginBottom: 20,
-    elevation: 5,
+    backgroundColor: "#f3f4f6",
+    padding: 8,
+    borderRadius: 12,
+    marginRight: 8,
+    marginBottom: 8,
   },
-  headerTitle: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "700",
+  vehicleSelected: {
+    backgroundColor: "#2563eb15",
+    borderColor: "#2563eb",
+    borderWidth: 2,
   },
-  textSection: {
-    marginBottom: 20,
+  vehicleText: { marginLeft: 6, fontSize: 14, fontWeight: "500" },
+  addBtn: {
+    backgroundColor: "#2563eb",
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginTop: 20,
   },
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#111827",
-  },
-  subText: {
-    fontSize: 14,
-    color: "#6b7280",
-    marginTop: 4,
-  },
-  continueBtn: {
-    borderRadius: 25,
-    paddingVertical: 14,
+  addBtnText: { color: "#fff", fontWeight: "600", fontSize: 16 },
+  empty: { color: "#6b7280", marginTop: 10, textAlign: "center" },
+  bookBtn: {
+    position: "absolute",
+    bottom: Platform.OS === "ios" ? 40 : 20,
+    left: 20,
+    right: 20,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#2563eb",
+    paddingVertical: 16,
+    borderRadius: 18,
     shadowColor: "#2563eb",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 6,
+    gap: 8,
+    marginBottom: 20
   },
-  continueText: {
-    fontSize: 16,
+  bookBtnText: {
     color: "#fff",
-    fontWeight: "600",
+    fontSize: 17,
+    fontWeight: "700",
     letterSpacing: 0.5,
+  },
+  bookBtnDisabled: {
+    backgroundColor: "#9ca3af",
+    opacity: 0.9,
+    shadowOpacity: 0,
   },
 });

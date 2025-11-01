@@ -103,9 +103,9 @@ const BookingConfirmed = () => {
             <Text style={styles.contactText}>Contact Rider</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.reachedButton}>
+          {/* <TouchableOpacity style={styles.reachedButton}>
             <Text style={styles.reachedText}>Reached Pickup</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         <TouchableOpacity

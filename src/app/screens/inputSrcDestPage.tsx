@@ -1,8 +1,9 @@
 import React from "react";
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, View, TouchableWithoutFeedback, Keyboard } from "react-native";
+import { KeyboardAvoidingView, Platform, StyleSheet, Text, View, TouchableWithoutFeedback, Keyboard, TouchableOpacity } from "react-native";
 import SourceInput from "../(components)/sourceInput";
 import DestinationInput from "../(components)/destinationInput";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 
 const InputSrcDestPage = () => {
   return (
@@ -19,7 +20,6 @@ const InputSrcDestPage = () => {
               <View style={styles.inputCard}>
                 <SourceInput />
               </View>
-
               <View style={styles.inputCard}>
                 <DestinationInput />
               </View>

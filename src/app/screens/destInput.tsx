@@ -14,7 +14,7 @@ const DestInput = () => {
   const dispatch = useDispatch();
   const rideMode = useSelector((state: RootState) => state.mode);
 
-  const handleSelectMode = (selectedMode: "normal" | "multi") => {
+  const handleSelectMode = (selectedMode: "single" | "multi") => {
     dispatch(setRideMode(selectedMode));
   };
 
@@ -34,7 +34,8 @@ const DestInput = () => {
               if (rideMode.mode === null) {
                 return
               }
-              router.push("/screens/inputSrcDestPage")
+              if (rideMode.mode === 'multi') router.push('/multimode/multiMode')
+              else router.push("/screens/inputSrcDestPage")
             }}
           >
             <Ionicons name="search" size={22} color="#2563eb" style={{ marginRight: 10 }} />
@@ -62,22 +63,22 @@ const DestInput = () => {
       <View style={styles.modeContainer}>
         {/* Normal Ride */}
         <TouchableOpacity
-          onPress={() => handleSelectMode("normal")}
+          onPress={() => handleSelectMode("single")}
           activeOpacity={0.9}
           style={[
             styles.modeCard,
-            rideMode.mode === "normal" && styles.selectedCard,
+            rideMode.mode === "single" && styles.selectedCard,
           ]}
         >
           <Ionicons
             name="car-sport"
             size={40}
-            color={rideMode.mode === "normal" ? "#2563eb" : "#6b7280"}
+            color={rideMode.mode === "single" ? "#2563eb" : "#6b7280"}
           />
           <Text
             style={[
               styles.modeText,
-              rideMode.mode === "normal" && { color: "#2563eb" },
+              rideMode.mode === "single" && { color: "#2563eb" },
             ]}
           >
             Normal Ride

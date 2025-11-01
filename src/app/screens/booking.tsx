@@ -10,7 +10,9 @@ import Map from "./map";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { RootState } from "@/features/store";
 import MultiMode from "../multimode/multiMode";
-import MultiMap from "../multimode/multiMap";
+import MultiMap from "../multimode/modeRideCard";
+import MultiModeOptions from "../multimode/multiModeOptions";
+import MultiModeMap from "../multimode/multimodeMap";
 
 const Booking = () => {
   const router = useRouter()
@@ -26,14 +28,14 @@ const Booking = () => {
       {/* Map Section */}
       <Ionicons onPress={handleBackPress} name="arrow-back" size={30} color={'white'} style={styles.icon} />
       <View style={styles.mapContainer}>
-        { rideMode.mode == 'normal' ? <Map />
-        : <MultiMap />}
+        { rideMode.mode === 'single' ? <Map />
+        : <MultiModeMap /> }
       </View>
 
       {/* Ride Options */}
       <View style={styles.optionsContainer}>
-        { rideMode.mode == 'normal' ? <RideOptions />
-        : <MultiMode />}
+        { rideMode.mode == 'single' ? <RideOptions />
+        : <MultiModeOptions />}
         
       </View>
     </SafeAreaView>
