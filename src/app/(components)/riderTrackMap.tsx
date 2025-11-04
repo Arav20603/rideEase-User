@@ -11,6 +11,7 @@ import { router } from "expo-router";
 const RiderTrackMap = () => {
   const mapRef = useRef<MapView | null>(null);
   const ride = useSelector((state: RootState) => state.ride);
+  const rides = useSelector((state: RootState) => state.mode);
 
   const [riderCoords, setRiderCoords] = useState<LatLng | null>(
     ride.riderLocation?.location
@@ -34,6 +35,7 @@ const RiderTrackMap = () => {
   const vehicleIcon = vehicleIcons[ride.rideDetails?.id || "bike"];
 
   useEffect(() => {
+    console.log('rides',ride)
     const handleLocation = (data: any) => {
       console.log('rider_location received', data)
       const { lat, lng } = data?.location || data?.riderLocation || {};

@@ -31,7 +31,7 @@ const FindingRider = () => {
         },
         otp: rideOtp
       }))
-      console.log(rideOtp)
+      // console.log(rideOtp)
       router.push('/screens/bookingConfirmed')
     });
 

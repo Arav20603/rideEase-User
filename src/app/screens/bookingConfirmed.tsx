@@ -7,11 +7,13 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { socket } from "@/utils/socket";
 import { Toast } from "toastify-react-native";
+import MultiModeTrackMap from "../multimode/multiModeTrackMap";
 
 const { height, width } = Dimensions.get("window");
 
 const BookingConfirmed = () => {
   const ride = useSelector((state: RootState) => state.ride);
+  const rides = useSelector((state: RootState) => state.mode);
 
   // Vehicle icons mapping
   const vehicleIcons: any = {
@@ -44,6 +46,7 @@ const BookingConfirmed = () => {
   }
 
   useEffect(() => {
+    // console.log(rides)
     socket.on('ride_start', (msg) => {
       if (msg)
       router.push('/rideStarted')
@@ -63,7 +66,7 @@ const BookingConfirmed = () => {
     <View style={styles.container}>
       {/* Map */}
       <View style={styles.mapContainer}>
-        <RiderTrackMap />
+        { rides.mode === 'single' ? <RiderTrackMap /> : <MultiModeTrackMap />}
       </View>
 
       {/* Bottom Panel */}

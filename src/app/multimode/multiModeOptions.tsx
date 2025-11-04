@@ -1,10 +1,26 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Alert, Animated } from "react-native";
-import { useSelector } from "react-redux";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Animated,
+} from "react-native";
+import { useDispatch, useSelector } from "react-redux";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { socket } from "@/utils/socket";
 import { RootState } from "@/features/store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import { backendURL } from "@/constants/url";
+import {
+  selectTravelTimeInformation,
+  setDestination,
+  setOrigin,
+} from "@/features/mapSlice/mapSlice";
+import { rideTypes } from "@/constants/ridesConfig";
+import { setRideDetails } from "@/features/rideSlice/rideSlice";
 
 const MultiModeOptions = () => {
   const rides = useSelector((state: RootState) => state.mode.rides);
@@ -12,68 +28,184 @@ const MultiModeOptions = () => {
   const [fadeAnim] = useState(new Animated.Value(0));
   const currentRide = rides[currentIndex];
   const router = useRouter();
+  const [user, setUserDetails] = useState<any>(null);
+  const dispatch = useDispatch();
+  const travelTimeInformation = useSelector(selectTravelTimeInformation);
 
-  // Handle animation on ride change
-  useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 400,
-      useNativeDriver: true,
-    }).start();
-  }, [currentIndex]);
+  // ✅ Updated: realistic Bangalore Metro fare logic
+  const getFare = (vehicle: keyof typeof rideTypes, ride?: any) => {
+    // 🚇 Metro fare calculation (Namma Metro style)
+    if (vehicle === "metro") {
+      let distanceKm = 0;
 
-  // Listen for backend signal when ride is completed by driver
-  useEffect(() => {
-    const handler = (data: any) => {
-      console.log("Ride completed event:", data);
-
-      if (currentIndex < rides.length - 1) {
-        setCurrentIndex((prev) => prev + 1);
-        fadeAnim.setValue(0);
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 400,
-          useNativeDriver: true,
-        }).start();
-        Alert.alert("Next Segment", "Your next ride segment is ready to book!");
-      } else {
-        Alert.alert("Journey Completed 🎉", "You’ve completed all ride segments!");
+      if (travelTimeInformation?.distance?.value) {
+        distanceKm = travelTimeInformation.distance.value / 1000;
+      } else if (ride?.origin?.location && ride?.destination?.location) {
+        const { lat: lat1, lng: lng1 } = ride.origin.location;
+        const { lat: lat2, lng: lng2 } = ride.destination.location;
+        const R = 6371; // km
+        const dLat = ((lat2 - lat1) * Math.PI) / 180;
+        const dLng = ((lng2 - lng1) * Math.PI) / 180;
+        const a =
+          Math.sin(dLat / 2) ** 2 +
+          Math.cos((lat1 * Math.PI) / 180) *
+            Math.cos((lat2 * Math.PI) / 180) *
+            Math.sin(dLng / 2) ** 2;
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        distanceKm = R * c;
       }
-    };
 
-    socket.on("ride_completed", handler);
+      if (!distanceKm || isNaN(distanceKm)) distanceKm = 3;
 
-    return () => {
-      socket.off("ride_completed", handler);
-    };
-  }, [currentIndex, rides]);
+      // Approx metro fare (based on BMRC slab)
+      let fare = 0;
+      if (distanceKm <= 2) fare = 10;
+      else if (distanceKm <= 5) fare = 20;
+      else if (distanceKm <= 10) fare = 30;
+      else if (distanceKm <= 15) fare = 40;
+      else if (distanceKm <= 25) fare = 50;
+      else fare = 60;
 
-  // Handle starting ride or metro booking
-  const handleStartRide = () => {
-    if (!currentRide) return;
-
-    if (currentRide.vehicle === "metro") {
-      // return router.push("/metroTicket"); // redirect to metro ticket screen
+      return `₹${fare}`;
     }
 
+    // 🚗 Normal vehicle fare
+    const pricing = rideTypes[vehicle];
+    if (!pricing) return "₹--";
+
+    let distanceKm = 0;
+    if (travelTimeInformation?.distance?.value) {
+      distanceKm = travelTimeInformation.distance.value / 1000;
+    } else if (ride?.origin?.location && ride?.destination?.location) {
+      const { lat: lat1, lng: lng1 } = ride.origin.location;
+      const { lat: lat2, lng: lng2 } = ride.destination.location;
+      const R = 6371;
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLng = ((lng2 - lng1) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos((lat1 * Math.PI) / 180) *
+          Math.cos((lat2 * Math.PI) / 180) *
+          Math.sin(dLng / 2) ** 2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      distanceKm = R * c;
+    }
+
+    if (!distanceKm || isNaN(distanceKm)) distanceKm = 5;
+
+    let fare = pricing.baseFare + distanceKm * pricing.pricePerKm;
+    fare = Math.ceil(fare / 5) * 5;
+
+    return `₹${fare}`;
+  };
+
+  // --- Fetch user details ---
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const email = await AsyncStorage.getItem("user");
+        if (email) {
+          const res = await axios.post(`${backendURL}/get-user`, { email });
+          if (res.data.success) setUserDetails(res.data.user);
+        }
+      } catch (error) {
+        console.log("Error in fetching user:", error);
+      }
+    }
+    fetchUser();
+  }, []);
+
+  // --- Find the first incomplete ride ---
+  useEffect(() => {
+    const incompleteIndex = rides.findIndex((r) => !r.completed);
+    if (incompleteIndex !== -1) setCurrentIndex(incompleteIndex);
+    else router.push("/home");
+  }, [rides]);
+
+  // --- Fade animation ---
+  useEffect(() => {
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [currentIndex]);
+
+  const handleStartRide = async () => {
+    if (!currentRide) return;
+
+    dispatch(
+      setOrigin({
+        location: {
+          lat: currentRide.origin?.location?.lat || 0,
+          lng: currentRide.origin?.location?.lng || 0,
+        },
+        description: currentRide.origin?.description || "",
+      })
+    );
+    dispatch(
+      setDestination({
+        location: {
+          lat: currentRide.destination?.location?.lat || 0,
+          lng: currentRide.destination?.location?.lng || 0,
+        },
+        description: currentRide.destination?.description || "",
+      })
+    );
+
+    const computedFare = parseInt(
+      getFare(currentRide.vehicle, currentRide).replace("₹", "")
+    );
+
+    const badgeMap: Record<string, string> = {
+      bike: "Fastest",
+      auto: "Affordable",
+      car: "Standard",
+      suv: "Family",
+      metro: "Smart",
+    };
+    const badge = badgeMap[currentRide.vehicle] || "Standard";
+
     const rideRequest = {
-      user: { email: "user@email.com", name: "John Doe", phone: "9999999999" },
+      user,
       ride: {
         id: currentRide.vehicle,
         title: currentRide.vehicle,
-        baseFare: 30,
-        pricePerKm: 10,
+        baseFare: rideTypes[currentRide.vehicle].baseFare,
+        pricePerKm: rideTypes[currentRide.vehicle].pricePerKm,
         image: 1,
-        badge: "Fastest",
+        badge,
       },
       origin: currentRide.origin,
       destination: currentRide.destination,
-      fare: 100,
-      timestamp: new Date(),
+      fare: computedFare,
+      timestamp: new Date().toISOString(),
     };
 
+    if (currentRide.vehicle === "metro") {
+      router.push({
+        pathname: "/screens/metroTicket",
+        params: {
+          origin: currentRide.origin?.description,
+          destination: currentRide.destination?.description,
+          fare: computedFare,
+          id: currentRide.id,
+        },
+      });
+      return;
+    }
+
+    dispatch(setRideDetails(rideRequest));
+    await AsyncStorage.setItem("currentRideId", currentRide.id);
     socket.emit("user_request", rideRequest);
-    Alert.alert("Ride Requested", `Request sent for ${currentRide.vehicle}`);
+    router.push("/screens/findingRider");
   };
 
   if (!currentRide) {
@@ -110,28 +242,23 @@ const MultiModeOptions = () => {
           </Text>
         </View>
 
-        {currentRide.vehicle === "metro" ? (
-          <Text style={styles.locationText}>
-            🚇 {currentRide.metroDetails?.fromStation} →{" "}
-            {currentRide.metroDetails?.toStation}
-          </Text>
-        ) : (
-          <Text style={styles.locationText}>
-            📍 {currentRide.origin?.description?.split(",")[0]} →{" "}
-            {currentRide.destination?.description?.split(",")[0]}
-          </Text>
-        )}
+        <Text style={styles.locationText}>
+          📍 {currentRide.origin?.description?.split(",")[0]} →{" "}
+          {currentRide.destination?.description?.split(",")[0]}
+        </Text>
 
-        <View style={styles.btnRow}>
-          <TouchableOpacity style={styles.startBtn} onPress={handleStartRide}>
-            <Ionicons name="navigate-circle" size={22} color="#fff" />
-            <Text style={styles.btnText}>
-              {currentRide.vehicle === "metro"
-                ? "Book Metro Ticket"
-                : "Start Ride"}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.fareText}>
+          Estimated Fare: {getFare(currentRide.vehicle, currentRide)}
+        </Text>
+
+        <TouchableOpacity style={styles.startBtn} onPress={handleStartRide}>
+          <Ionicons name="navigate-circle" size={22} color="#fff" />
+          <Text style={styles.btnText}>
+            {currentRide.vehicle === "metro"
+              ? "Book Metro Ticket"
+              : "Start Ride"}
+          </Text>
+        </TouchableOpacity>
       </Animated.View>
     </View>
   );
@@ -180,10 +307,11 @@ const styles = StyleSheet.create({
     color: "#374151",
     marginVertical: 6,
   },
-  btnRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 25,
+  fareText: {
+    fontSize: 16,
+    color: "#111827",
+    fontWeight: "600",
+    marginTop: 10,
   },
   startBtn: {
     flexDirection: "row",
@@ -193,6 +321,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     borderRadius: 14,
     justifyContent: "center",
+    marginTop: 25,
   },
   btnText: {
     color: "#fff",

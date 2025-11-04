@@ -1,20 +1,75 @@
-import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Linking, Alert } from 'react-native';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/features/store';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useEffect, useRef } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  Linking,
+  Alert,
+} from "react-native";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/features/store";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { socket } from "@/utils/socket";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { markRideComplete } from "@/features/multimodeSlice/multimodeSlice";
 
 const RideComplete = () => {
   const ride = useSelector((state: RootState) => state.ride);
+  const rides = useSelector((state: RootState) => state.mode.rides);
+  const ridesRef = useRef(rides); // keep latest rides in a ref
+  const router = useRouter();
+  const dispatch = useDispatch();
 
+  // Keep rides ref updated
+  useEffect(() => {
+    ridesRef.current = rides;
+  }, [rides]);
+
+  // Listen for backend "ride_finished" event
+  useEffect(() => {
+    const handler = async (data: any) => {
+      console.log("Ride finished event received:", data);
+
+      const currentRideId = await AsyncStorage.getItem("currentRideId");
+
+      if (currentRideId) {
+        dispatch(markRideComplete({ id: currentRideId }));
+        await AsyncStorage.removeItem("currentRideId");
+      }
+
+      // Use ridesRef to avoid dependency loop
+      const remainingRides = ridesRef.current.filter((r) => !r.completed);
+      if (remainingRides.length > 0) {
+        console.log("Navigating to next multimode segment");
+        router.replace("/screens/booking");
+      } else {
+        console.log("All rides completed, navigating home");
+        router.replace("/home");
+      }
+    };
+
+    socket.on("ride_finished", handler);
+
+    return () => {
+      socket.off("ride_finished", handler);
+    };
+  }, [dispatch, router]);
+
+  // Handle UPI Payment
   const handleUPIPayment = async () => {
-    const upiId = 'dakshandaravind-1@okhdfcbank';
+    const upiId = "dakshandaravind-1@okhdfcbank";
     const amount = ride?.fare || 1;
-    const name = 'Aravind Dakshan D';
-    const note = `Ride payment - ${ride.origin?.description || ''} to ${ride.destination?.description || ''}`;
+    const name = "Aravind Dakshan D";
+    const note = `Ride payment - ${ride.origin?.description || ""} to ${
+      ride.destination?.description || ""
+    }`;
 
-    const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(name)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
+    const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(
+      name
+    )}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
 
     try {
       const supported = await Linking.canOpenURL(upiUrl);
@@ -22,13 +77,13 @@ const RideComplete = () => {
         await Linking.openURL(upiUrl);
       } else {
         Alert.alert(
-          'UPI App Not Found',
-          'No UPI app found on this device. Please install Google Pay, PhonePe, or Paytm to complete the payment.'
+          "UPI App Not Found",
+          "No UPI app found on this device. Please install Google Pay, PhonePe, or Paytm."
         );
       }
     } catch (error) {
-      console.error('Error initiating UPI payment:', error);
-      Alert.alert('Error', 'Something went wrong while opening the UPI app.');
+      console.error("Error initiating UPI payment:", error);
+      Alert.alert("Error", "Something went wrong while opening the UPI app.");
     }
   };
 
@@ -49,7 +104,11 @@ const RideComplete = () => {
         </View>
 
         <View style={styles.row}>
-          <MaterialCommunityIcons name="currency-inr" size={22} color="#28a745" />
+          <MaterialCommunityIcons
+            name="currency-inr"
+            size={22}
+            color="#28a745"
+          />
           <Text style={styles.fareText}>{ride.fare}</Text>
         </View>
       </View>
@@ -66,63 +125,63 @@ export default RideComplete;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
-    alignItems: 'center',
+    backgroundColor: "#f8fafc",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingTop: 20,
   },
   header: {
     fontSize: 26,
-    fontWeight: '700',
-    color: '#003366',
+    fontWeight: "700",
+    color: "#003366",
     marginBottom: 5,
-    textAlign: 'center',
+    textAlign: "center",
   },
   subHeader: {
     fontSize: 16,
-    color: '#555',
+    color: "#555",
     marginBottom: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
   rideCard: {
-    width: '100%',
-    backgroundColor: '#fff',
+    width: "100%",
+    backgroundColor: "#fff",
     borderRadius: 20,
     padding: 20,
     marginBottom: 40,
     elevation: 5,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 8,
   },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 12,
   },
   locationText: {
     marginLeft: 10,
     fontSize: 16,
-    color: '#333',
+    color: "#333",
     flexShrink: 1,
   },
   fareText: {
     marginLeft: 10,
     fontSize: 18,
-    fontWeight: '700',
-    color: '#28a745',
+    fontWeight: "700",
+    color: "#28a745",
   },
   payBtn: {
-    width: '100%',
-    backgroundColor: '#0284c7',
+    width: "100%",
+    backgroundColor: "#0284c7",
     paddingVertical: 16,
     borderRadius: 14,
-    alignItems: 'center',
+    alignItems: "center",
     elevation: 4,
   },
   payBtnText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });

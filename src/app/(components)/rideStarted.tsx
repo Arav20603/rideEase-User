@@ -16,6 +16,7 @@ import * as Location from 'expo-location';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { socket } from '@/utils/socket';
+import MultiModeMap from '../multimode/multimodeMap';
 
 const RideStarted = () => {
   const dispatch = useDispatch();
@@ -25,6 +26,7 @@ const RideStarted = () => {
   const destination = useSelector(selectDestination);
   const time = useSelector(selectTravelTimeInformation);
   const [loading, setLoading] = useState(true);
+  const rideMode = useSelector((state:RootState) => state.mode)
 
   const vehicleIcons: Record<string, any> = {
     bike: require('../../assets/icons/bike.png'),
@@ -39,6 +41,7 @@ const RideStarted = () => {
 
   // User location
   useEffect(() => {
+    console.log(origin)
     let subscriber: Location.LocationSubscription | null = null;
 
     const startLocationTracking = async () => {
@@ -118,7 +121,7 @@ const RideStarted = () => {
   }, [origin, destination, dispatch]);
 
   useEffect(() => {
-    socket.on('ride_complete', (msg) => {
+    socket.on('ride_completed', (msg) => {
       if (msg) router.push('/screens/rideComplete')
     })
   }, [])
@@ -151,7 +154,8 @@ const RideStarted = () => {
     <SafeAreaView style={styles.container}>
       {/* Top Map */}
       <View style={styles.mapContainer}>
-        <Map />
+        {rideMode.mode === 'single' ? <Map /> :  <MultiModeMap />}
+        {/* <Map /> */}
       </View>
 
       {/* Bottom Drawer */}

@@ -8,10 +8,17 @@ interface Props {
   onRemove: (id: string) => void;
 }
 
-const shortenText = (text?: string | null) => {
+const shortenText = (text: any) => {
+  // Guard: if it's not a string, try to extract a useful label
   if (!text) return "Unknown";
+  if (typeof text !== "string") {
+    // Sometimes the Google Places API returns an object or nested description
+    if (text.description) return shortenText(text.description);
+    return "Unknown";
+  }
+
   const parts = text.split(",");
-  if (parts.length >= 3) return `${parts[0].trim()}, ${parts[1].trim()}`;
+  if (parts.length >= 2) return `${parts[0].trim()}, ${parts[1].trim()}`;
   return text.trim();
 };
 
@@ -37,13 +44,8 @@ const ModeRideCard: React.FC<Props> = ({ ride, onRemove }) => {
       ? ride.vehicle.charAt(0).toUpperCase() + ride.vehicle.slice(1)
       : "Unknown";
 
-  const origin = ride.origin?.description ? shortenText(ride.origin.description) : "—";
-  const destination = ride.destination?.description
-    ? shortenText(ride.destination.description)
-    : "—";
-
-  const fromStation = shortenText(ride.metroDetails?.fromStation);
-  const toStation = shortenText(ride.metroDetails?.toStation);
+  const origin = shortenText(ride.origin?.description);
+  const destination = shortenText(ride.destination?.description);
 
   return (
     <View style={styles.card}>
@@ -55,7 +57,7 @@ const ModeRideCard: React.FC<Props> = ({ ride, onRemove }) => {
           </Text>
           {isMetro ? (
             <Text style={styles.route}>
-              🚉 {fromStation} → {toStation}
+              🚉 {origin} → {destination}
             </Text>
           ) : (
             <Text style={styles.route}>

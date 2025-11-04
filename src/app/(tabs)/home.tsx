@@ -10,17 +10,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { socket } from '@/utils/socket';
+import { resetAllRides } from '@/features/multimodeSlice/multimodeSlice';
 
 const Home = () => {
   const dispatch = useDispatch();
   const origin = useSelector((state: RootState) => selectOrigin(state));
   const [loading, setLoading] = useState<boolean>(true);
   const ride = useSelector((state: RootState) => state.ride)
+  const rides = useSelector((state: RootState) => state.mode)
 
   const LOCATION_KEY = 'user_origin';
   const CACHE_EXPIRY = 10 * 60 * 1000; // 10 mins
 
   useEffect(() => {
+    dispatch(resetAllRides())
     dispatch(setDestination(null))
   }, [dispatch])
   

@@ -1,5 +1,6 @@
+// components/multimode/MultiModeMap.tsx
 import React, { useEffect, useRef } from "react";
-import { View, StyleSheet, Text } from "react-native";
+import { StyleSheet, Text } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import MapViewDirections from "react-native-maps-directions";
 import { useSelector } from "react-redux";
@@ -10,22 +11,27 @@ const MultiModeMap = () => {
   const rides = useSelector((state: RootState) => state.mode.rides);
   const mapRef = useRef<MapView | null>(null);
 
+  // Auto fit map to include all origin and destination markers
   useEffect(() => {
     if (!rides?.length) return;
 
     const markers = rides.flatMap((r) => [r.origin, r.destination].filter(Boolean));
-
     if (markers.length === 0) return;
 
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
       mapRef.current?.fitToCoordinates(
         markers.map((m: any) => ({
           latitude: m.location.lat,
           longitude: m.location.lng,
         })),
-        { edgePadding: { top: 100, right: 60, bottom: 100, left: 60 }, animated: true }
+        {
+          edgePadding: { top: 70, right: 70, bottom: 70, left: 70 },
+          animated: true,
+        }
       );
     }, 500);
+
+    return () => clearTimeout(timeout);
   }, [rides]);
 
   if (!rides?.length)
@@ -36,77 +42,78 @@ const MultiModeMap = () => {
   const initialLng = firstRide?.origin?.location?.lng || 77.5946;
 
   return (
-    <View style={styles.container}>
-      <MapView
-        ref={mapRef}
-        style={styles.map}
-        initialRegion={{
-          latitude: initialLat,
-          longitude: initialLng,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        }}
-        showsUserLocation
-        showsMyLocationButton
-      >
-        {rides.map((ride, index) => {
-          if (!ride.origin || !ride.destination) return null;
+    <MapView
+      ref={mapRef}
+      style={styles.map}
+      initialRegion={{
+        latitude: initialLat,
+        longitude: initialLng,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      }}
+      showsUserLocation
+      showsMyLocationButton
+    >
+      {rides.map((ride, index) => {
+        if (!ride.origin || !ride.destination) return null;
 
-          return (
-            <React.Fragment key={ride.id}>
-              <Marker
-                coordinate={{
-                  latitude: ride.origin.location?.lat || 0,
-                  longitude: ride.origin.location?.lng || 0,
-                }}
-                title={`Start (${ride.vehicle})`}
-                pinColor="#2563eb"
-              />
-              <Marker
-                coordinate={{
-                  latitude: ride.destination.location?.lat || 0,
-                  longitude: ride.destination.location?.lng || 0,
-                }}
-                title={`End (${ride.vehicle})`}
-                pinColor="#10b981"
-              />
-              <MapViewDirections
-                origin={{
-                  latitude: ride.origin.location?.lat || 0,
-                  longitude: ride.origin.location?.lng || 0,
-                }}
-                destination={{
-                  latitude: ride.destination.location?.lat || 0,
-                  longitude: ride.destination.location?.lng || 0,
-                }}
-                apikey={GOOGLE_MAPS_API_KEY}
-                strokeWidth={index === 0 ? 5 : 3}
-                strokeColor={index === 0 ? "#2563eb" : "#9ca3af"}
-              />
-            </React.Fragment>
-          );
-        })}
-      </MapView>
-    </View>
+        const { origin, destination, vehicle } = ride;
+        const originCoords = origin.location;
+        const destinationCoords = destination.location;
+
+        return (
+          <React.Fragment key={ride.id}>
+            {/* Origin Marker */}
+            <Marker
+              coordinate={{
+                latitude: originCoords?.lat || 0,
+                longitude: originCoords?.lng || 0,
+              }}
+              title={`Pickup (${vehicle})`}
+              description={origin.description || ""}
+              identifier={`origin-${ride.id}`}
+            />
+
+            {/* Destination Marker */}
+            <Marker
+              coordinate={{
+                latitude: destinationCoords?.lat || 0,
+                longitude: destinationCoords?.lng || 0,
+              }}
+              title={`Drop (${vehicle})`}
+              description={destination.description || ""}
+              identifier={`destination-${ride.id}`}
+              pinColor="blue"
+            />
+
+            {/* Route Direction */}
+            <MapViewDirections
+              origin={{
+                latitude: originCoords?.lat || 0,
+                longitude: originCoords?.lng || 0,
+              }}
+              destination={{
+                latitude: destinationCoords?.lat || 0,
+                longitude: destinationCoords?.lng || 0,
+              }}
+              apikey={GOOGLE_MAPS_API_KEY}
+              strokeWidth={4}
+              strokeColor="black"
+            />
+          </React.Fragment>
+        );
+      })}
+    </MapView>
   );
 };
 
 export default MultiModeMap;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f3f4f6",
-    padding: 16,
-  },
   map: {
     flex: 1,
     borderRadius: 20,
     overflow: "hidden",
-    elevation: 6,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
   },
   empty: {
     textAlign: "center",

@@ -10,61 +10,63 @@ import {
   Keyboard,
   Platform,
   FlatList,
+  TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { addRide, removeRide } from "@/features/multimodeSlice/multimodeSlice";
-import { RootState } from "@/features/store";
+import { RootState, store } from "@/features/store";
 import { nanoid } from "@reduxjs/toolkit";
 import LocationInput from "./locationInput";
 import ModeRideCard from "./modeRideCard";
 import { Toast } from "toastify-react-native";
 import { router } from "expo-router";
+import { selectOrigin } from "@/features/mapSlice/mapSlice";
 
 const vehicles = ["bike", "car", "auto", "metro"] as const;
 
 const MultiMode = () => {
   const dispatch = useDispatch();
   const rides = useSelector((state: RootState) => state.mode.rides);
+  const originGet = useSelector(selectOrigin);
 
   const [vehicle, setVehicle] = useState<typeof vehicles[number] | null>(null);
   const [origin, setOrigin] = useState<any>(null);
   const [destination, setDestination] = useState<any>(null);
-  const [metroDetails, setMetroDetails] = useState({ fromStation: "", toStation: "" });
   const [clearTrigger, setClearTrigger] = useState(false);
+  const [isOriginSet, setIsOriginSet] = useState(false);
 
   const handleAddRide = () => {
     if (!vehicle) return Toast.error("Select a vehicle type");
-
-    if (vehicle === "metro") {
-      if (!metroDetails.fromStation || !metroDetails.toStation)
-        return Alert.alert("Enter both metro stations");
-    } else {
-      if (!origin || !destination)
-        return Alert.alert("Select both origin and destination");
-    }
+    if (!origin || !destination)
+      return Alert.alert("Select both origin and destination");
 
     const ride = {
       id: nanoid(),
       type: vehicle === "metro" ? "public" : "private",
       vehicle,
-      origin: vehicle !== "metro" ? origin : null,
-      destination: vehicle !== "metro" ? destination : null,
-      metroDetails: vehicle === "metro" ? metroDetails : undefined,
+      origin,
+      destination,
       completed: false,
     };
 
     dispatch(addRide(ride));
-    console.log("Added:", ride);
+    console.log("✅ Added Ride:", ride);
 
     setOrigin(null);
     setDestination(null);
     setVehicle(null);
-    setMetroDetails({ fromStation: "", toStation: "" });
-    setClearTrigger(prev => !prev);
+    setClearTrigger((prev) => !prev);
+    setIsOriginSet(false);
+
+    console.log("All rides:", store.getState().mode.rides);
   };
 
+  const handleSetOrigin = () => {
+    setOrigin(originGet);
+    setIsOriginSet((prev) => !prev);
+  };
 
   const renderRideItem = ({ item }: any) => (
     <ModeRideCard ride={item} onRemove={(id) => dispatch(removeRide({ id }))} />
@@ -85,24 +87,37 @@ const MultiMode = () => {
               <View>
                 <Text style={styles.title}>Multi-Mode Ride Builder</Text>
 
-                {/* Inputs */}
+                {/* Metro-specific UI */}
                 {vehicle === "metro" ? (
                   <>
                     <Text style={styles.label}>From Station</Text>
                     <LocationInput
-                      key={`from-${clearTrigger}`}  // 👈 add this
+                      key={`from-${clearTrigger}`}
                       placeholder="Enter from station"
-                      onSelect={(data) =>
-                        setMetroDetails({ ...metroDetails, fromStation: data.description })
+                      onSelect={(data, details) =>
+                        setOrigin({
+                          location: {
+                            lat: details?.geometry?.location.lat,
+                            lng: details?.geometry?.location.lng,
+                          },
+                          description: data.description,
+                        })
                       }
                       clearTrigger={clearTrigger}
                     />
+
                     <Text style={styles.label}>To Station</Text>
                     <LocationInput
-                      key={`to-${clearTrigger}`}  // 👈 add this
+                      key={`to-${clearTrigger}`}
                       placeholder="Enter to station"
-                      onSelect={(data) =>
-                        setMetroDetails({ ...metroDetails, toStation: data.description })
+                      onSelect={(data, details) =>
+                        setDestination({
+                          location: {
+                            lat: details?.geometry?.location.lat,
+                            lng: details?.geometry?.location.lng,
+                          },
+                          description: data.description,
+                        })
                       }
                       clearTrigger={clearTrigger}
                     />
@@ -110,24 +125,47 @@ const MultiMode = () => {
                 ) : (
                   <>
                     <Text style={styles.label}>Origin</Text>
-                    <LocationInput
-                      key={`origin-${clearTrigger}`}  // 👈 add this
-                      placeholder="Enter pickup"
-                      onSelect={(data, details) =>
-                        setOrigin({
-                          location: details?.geometry?.location,
-                          description: data.description,
-                        })
-                      }
-                      clearTrigger={clearTrigger}
-                    />
+                    {!isOriginSet ? (
+                      <LocationInput
+                        key={`origin-${clearTrigger}`}
+                        placeholder="Enter pickup"
+                        onSelect={(data, details) =>
+                          setOrigin({
+                            location: {
+                              lat: details?.geometry?.location.lat,
+                              lng: details?.geometry?.location.lng,
+                            },
+                            description: data.description,
+                          })
+                        }
+                        clearTrigger={clearTrigger}
+                      />
+                    ) : (
+                      <TextInput
+                        value={origin?.description || ""}
+                        style={styles.inputDisabled}
+                        editable={false}
+                      />
+                    )}
+                    <TouchableOpacity
+                      style={styles.originBtn}
+                      onPress={handleSetOrigin}
+                    >
+                      <Text style={{ textAlign: "center", color: "white" }}>
+                        {isOriginSet ? "Clear" : "Set"} Origin
+                      </Text>
+                    </TouchableOpacity>
+
                     <Text style={styles.label}>Destination</Text>
                     <LocationInput
-                      key={`dest-${clearTrigger}`}  // 👈 add this
+                      key={`dest-${clearTrigger}`}
                       placeholder="Enter drop"
                       onSelect={(data, details) =>
                         setDestination({
-                          location: details?.geometry?.location,
+                          location: {
+                            lat: details?.geometry?.location.lat,
+                            lng: details?.geometry?.location.lng,
+                          },
                           description: data.description,
                         })
                       }
@@ -136,14 +174,17 @@ const MultiMode = () => {
                   </>
                 )}
 
-
-                {/* Vehicle Selector */}
-                <Text style={[styles.label, { marginTop: 16 }]}>Select Vehicle</Text>
+                <Text style={[styles.label, { marginTop: 16 }]}>
+                  Select Vehicle
+                </Text>
                 <View style={styles.vehicleContainer}>
                   {vehicles.map((v) => (
                     <TouchableOpacity
                       key={v}
-                      style={[styles.vehicleBtn, vehicle === v && styles.vehicleSelected]}
+                      style={[
+                        styles.vehicleBtn,
+                        vehicle === v && styles.vehicleSelected,
+                      ]}
                       onPress={() => setVehicle(v)}
                     >
                       <Ionicons
@@ -151,16 +192,19 @@ const MultiMode = () => {
                           v === "bike"
                             ? "bicycle"
                             : v === "car"
-                              ? "car"
-                              : v === "auto"
-                                ? "car-sport"
-                                : "train"
+                            ? "car"
+                            : v === "auto"
+                            ? "car-sport"
+                            : "train"
                         }
                         size={20}
                         color={vehicle === v ? "#2563eb" : "#6b7280"}
                       />
                       <Text
-                        style={[styles.vehicleText, vehicle === v && { color: "#2563eb" }]}
+                        style={[
+                          styles.vehicleText,
+                          vehicle === v && { color: "#2563eb" },
+                        ]}
                       >
                         {v}
                       </Text>
@@ -168,8 +212,10 @@ const MultiMode = () => {
                   ))}
                 </View>
 
-                {/* Add Segment */}
-                <TouchableOpacity style={styles.addBtn} onPress={handleAddRide}>
+                <TouchableOpacity
+                  style={styles.addBtn}
+                  onPress={handleAddRide}
+                >
                   <Text style={styles.addBtnText}>+ Add Segment</Text>
                 </TouchableOpacity>
 
@@ -186,12 +232,11 @@ const MultiMode = () => {
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
 
-      {/* Fixed Bottom Button */}
       <TouchableOpacity
         activeOpacity={0.85}
         style={[styles.bookBtn, rides.length === 0 && styles.bookBtnDisabled]}
         disabled={rides.length === 0}
-        onPress={() => router.push('/screens/booking')}
+        onPress={() => router.push("/screens/booking")}
       >
         <Ionicons name="checkmark-circle" size={22} color="#fff" />
         <Text style={styles.bookBtnText}>
@@ -235,6 +280,20 @@ const styles = StyleSheet.create({
   },
   addBtnText: { color: "#fff", fontWeight: "600", fontSize: 16 },
   empty: { color: "#6b7280", marginTop: 10, textAlign: "center" },
+  inputDisabled: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    marginVertical: 8,
+  },
+  originBtn: {
+    backgroundColor: "#2563eb",
+    width: "30%",
+    padding: 10,
+    borderRadius: 20,
+    justifyContent: "center",
+  },
   bookBtn: {
     position: "absolute",
     bottom: Platform.OS === "ios" ? 40 : 20,
@@ -251,17 +310,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 6,
     gap: 8,
-    marginBottom: 20
   },
-  bookBtnText: {
-    color: "#fff",
-    fontSize: 17,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-  },
-  bookBtnDisabled: {
-    backgroundColor: "#9ca3af",
-    opacity: 0.9,
-    shadowOpacity: 0,
-  },
+  bookBtnText: { color: "#fff", fontSize: 17, fontWeight: "700", letterSpacing: 0.5 },
+  bookBtnDisabled: { backgroundColor: "#9ca3af", opacity: 0.9, shadowOpacity: 0 },
 });

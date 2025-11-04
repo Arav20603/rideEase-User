@@ -16,10 +16,10 @@ export interface RideSegment {
   vehicle: VehicleType;
   origin?: LocationState | null;
   destination?: LocationState | null;
-  metroDetails?: {
-    fromStation: string;
-    toStation: string;
-  };
+  // metroDetails?: {
+  //   fromStation: LocationState | null;
+  //   toStation: LocationState | null;
+  // };
   completed: boolean;
 }
 
@@ -55,7 +55,7 @@ const multiModeSlice = createSlice({
         vehicle: action.payload.vehicle ?? "car",
         origin: action.payload.origin ?? null,
         destination: action.payload.destination ?? null,
-        metroDetails: action.payload.metroDetails,
+        // metroDetails: action.payload.metroDetails ?? undefined,
         completed: false,
       };
       state.rides.push(newRide);
